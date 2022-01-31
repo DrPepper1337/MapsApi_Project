@@ -4,14 +4,17 @@ import sys
 import pygame as pg
 import requests
 
-
 pg.init()
 screen = pg.display.set_mode((600, 450))
 running = True
 
-lon = "133.795393"
-lat = "-25.694776"
-delta = 0.00
+lon = 37.620070
+lat = 55.753630
+delta = 0.002
+
+prev_lon = lon
+prev_lat = lat
+prev_delta = delta
 
 while running:
     for event in pg.event.get():
@@ -19,21 +22,44 @@ while running:
             running = False
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_PAGEUP:
-                delta += 0.02
-            if event.key == pg.K_PAGEDOWN and delta != 0:
-                delta -= 0.02
+                prev_delta = delta
+                delta *= 2
+            if event.key == pg.K_PAGEDOWN and delta != 0.0005:
+                prev_delta = delta
+                delta /= 2
+            if event.key == pg.K_UP:
+                prev_lat = lat
+                lat += delta * 1.4
+            if event.key == pg.K_DOWN:
+                prev_lat = lat
+                lat -= delta * 1.4
+            if event.key == pg.K_LEFT:
+                prev_lon = lon
+                lon -= delta * 3
+            if event.key == pg.K_RIGHT:
+                prev_lon = lon
+                lon += delta * 3
     api_server = "http://static-maps.yandex.ru/1.x/"
     params = {
-        "ll": ",".join([lon, lat]),
+        "ll": ",".join([str(lon), str(lat)]),
         "spn": ",".join([str(delta), str(delta)]),
-        "l": "sat"
+        "l": "sat",
     }
     response = requests.get(api_server, params=params)
 
     if not response:
-        print("Ошибка выполнения запроса:")
-        print("Http статус:", response.status_code, "(", response.reason, ")")
-        sys.exit(1)
+        lon = prev_lon
+        lat = prev_lat
+        delta = prev_delta
+        params = {
+            "ll": ",".join([str(lon), str(lat)]),
+            "spn": ",".join([str(delta), str(delta)]),
+            "l": "sat",
+        }
+        response = requests.get(api_server, params=params)
+        # print("Ошибка выполнения запроса:")
+        # print("Http статус:", response.status_code, "(", response.reason, ")")
+        # sys.exit(1)
 
     map_file = "map.png"
     with open(map_file, "wb") as file:
