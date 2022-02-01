@@ -1,22 +1,16 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QCheckBox, QPlainTextEdit, \
-    QMainWindow, QTextEdit, QTableWidget, QTableWidgetItem, QInputDialog, QListWidgetItem, QListWidget, QHeaderView
-import sqlite3
-from PyQt5.QtGui import QPainter, QColor, QPolygon
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5 import uic
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-from PyQt5 import QtCore
 import os
 import requests
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+
+from MainWidget import Ui_MainWindow
 
 
-class Example(QMainWindow):
+class MainWidget(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('y.ui', self)
-        self.setWindowTitle('MapApi_project')
 
         self.lon = 37.620070
         self.lat = 55.753630
@@ -28,8 +22,16 @@ class Example(QMainWindow):
 
         self.map_type = 'map'
 
-        self.getImage()
+        self.setupUi(self)
         self.initUI()
+        self.update()
+
+    def initUI(self):
+        self.change_type_btn.clicked.connect(self.change_map_type)
+        self.search_btn.clicked.connect(self.search_to_geocode)
+
+    def update(self):
+        self.getImage()
 
     def getImage(self):
         api_server = "http://static-maps.yandex.ru/1.x/"
@@ -58,20 +60,45 @@ class Example(QMainWindow):
         with open(self.map_file, "wb") as file:
             file.write(response.content)
         self.pixmap = QPixmap("map.png")
-        self.label.setPixmap(self.pixmap)
-        self.label.adjustSize()
+        self.map_label.setPixmap(self.pixmap)
 
-    def initUI(self):
-        self.pushButton_2.clicked.connect(self.change_map_type)
+
+    def search_to_geocode(self):
+        geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={self.search_le.text()}&format=json"
+        response = requests.get(geocoder_request)
+        if response:
+            json_response = response.json()
+            # Получаем первый топоним из ответа геокодера.
+            # Согласно описанию ответа, он находится по следующему пути:
+            toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+            # Полный адрес топонима:
+            toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+            # Координаты центра топонима:
+            toponym_coodrinates = toponym["Point"]["pos"]
+            self.lon, self.lat = [float(i) for i in toponym_coodrinates.split()]
+        else:
+            # Произошла ошибка выполнения запроса. Обрабатываем http-статус.
+            print("Ошибка выполнения запроса:")
+            print(geocoder_request)
+            print("Http статус:", response.status_code, "(", response.reason, ")")
+        self.update()
+
+    def change_map_type(self):
+        if self.map_type == 'map':
+            self.map_type = 'sat'
+        elif self.map_type == 'sat':
+            self.map_type = 'sat,skl'
+        else:
+            self.map_type = 'map'
+        self.update()
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_PageUp:
+        if event.key() == Qt.Key_PageUp:
             self.prev_delta = self.delta
             self.delta *= 2
-        if event.key() == QtCore.Qt.Key_PageDown and self.delta != 0.0005:
+        if event.key() == Qt.Key_PageDown and self.delta != 0.0005:
             self.prev_delta = self.delta
             self.delta /= 2
-
         if event.key() == Qt.Key_Up:
             self.prev_lat = self.lat
             self.lat += self.delta * 1.4
@@ -85,24 +112,15 @@ class Example(QMainWindow):
             self.prev_lon = self.lon
             self.lon += self.delta * 3
 
-        self.getImage()
+        self.update()
 
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
         os.remove(self.map_file)
 
-    def change_map_type(self):
-        if self.map_type == 'map':
-            self.map_type = 'sat'
-        elif self.map_type == 'sat':
-            self.map_type = 'sat,skl'
-        else:
-            self.map_type = 'map'
-        self.getImage()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
+    ex = MainWidget()
     ex.show()
     sys.exit(app.exec())
