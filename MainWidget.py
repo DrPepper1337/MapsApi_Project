@@ -25,6 +25,10 @@ class Ui_MainWindow(object):
         self.search_le.setGeometry(QtCore.QRect(570, 130, 221, 30))
         self.search_le.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.search_le.setObjectName("search_le")
+        self.reset_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.reset_btn.setGeometry(QtCore.QRect(570, 170, 220, 30))
+        self.reset_btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.reset_btn.setObjectName("reset_btn")
         self.change_type_btn = QtWidgets.QPushButton(self.centralwidget)
         self.change_type_btn.setGeometry(QtCore.QRect(570, 50, 220, 30))
         self.change_type_btn.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -54,5 +58,6 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "ЯндексЛицей Карты"))
         self.search_btn.setText(_translate("MainWindow", "Поиск"))
+        self.reset_btn.setText(_translate("MainWindow", "Сброс"))
         self.change_type_btn.setText(_translate("MainWindow", "Смена вида карты"))
         self.INF.setText(_translate("MainWindow", "Доп. функции"))

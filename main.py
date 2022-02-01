@@ -31,6 +31,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
     def initUI(self):
         self.change_type_btn.clicked.connect(self.change_map_type)
         self.search_btn.clicked.connect(self.search_to_geocode)
+        self.reset_btn.clicked.connect(self.reset)
 
     def update(self):
         self.getImage()
@@ -128,6 +129,11 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             self.prev_lat = self.lat
             self.lon += self.delta * 3
         self.update()
+
+    def reset(self):
+        self.point = False
+        self.search_le.setText('')
+        self.getImage()
 
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
