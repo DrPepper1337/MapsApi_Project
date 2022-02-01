@@ -57,6 +57,8 @@ class MainWidget(QMainWindow, Ui_MainWindow):
                 "spn": ",".join([str(self.delta), str(self.delta)]),
                 "l": self.map_type,
             }
+            if self.point is not False:
+                params['pt'] = self.point
             api_server = "http://static-maps.yandex.ru/1.x/"
             response = requests.get(api_server, params=params)
 
@@ -72,10 +74,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         response = requests.get(geocoder_request)
         if response:
             json_response = response.json()
-            # Получаем первый топоним из ответа геокодера.
-            # Согласно описанию ответа, он находится по следующему пути:
             toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
-            # Полный адрес топонима:
             toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
             # Координаты центра топонима:
             toponym_coodrinates = toponym["Point"]["pos"]
@@ -100,21 +99,33 @@ class MainWidget(QMainWindow, Ui_MainWindow):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_PageUp:
             self.prev_delta = self.delta
+            self.prev_lon = self.lon
+            self.prev_lat = self.lat
             self.delta *= 2
         if event.key() == Qt.Key_PageDown and self.delta != 0.0005:
             self.prev_delta = self.delta
+            self.prev_lon = self.lon
+            self.prev_lat = self.lat
             self.delta /= 2
         if event.key() == Qt.Key_Up:
+            self.prev_delta = self.delta
+            self.prev_lon = self.lon
             self.prev_lat = self.lat
             self.lat += self.delta * 1.4
         if event.key() == Qt.Key_Down:
+            self.prev_delta = self.delta
+            self.prev_lon = self.lon
             self.prev_lat = self.lat
             self.lat -= self.delta * 1.4
         if event.key() == Qt.Key_Left:
+            self.prev_delta = self.delta
             self.prev_lon = self.lon
+            self.prev_lat = self.lat
             self.lon -= self.delta * 3
         if event.key() == Qt.Key_Right:
+            self.prev_delta = self.delta
             self.prev_lon = self.lon
+            self.prev_lat = self.lat
             self.lon += self.delta * 3
         self.update()
 
