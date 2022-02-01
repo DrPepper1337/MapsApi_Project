@@ -20,6 +20,8 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.prev_lat = self.lat
         self.prev_delta = self.delta
 
+        self.point = False
+
         self.map_type = 'map'
 
         self.setupUi(self)
@@ -41,6 +43,8 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             "spn": ",".join([str(self.delta), str(self.delta)]),
             "l": self.map_type,
         }
+        if self.point is not False:
+            params['pt'] = self.point
 
         response = requests.get(api_server, params=params)
 
@@ -76,6 +80,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             # Координаты центра топонима:
             toponym_coodrinates = toponym["Point"]["pos"]
             self.lon, self.lat = [float(i) for i in toponym_coodrinates.split()]
+            self.point = f'{self.lon},{self.lat},round'
         else:
             # Произошла ошибка выполнения запроса. Обрабатываем http-статус.
             print("Ошибка выполнения запроса:")
@@ -111,7 +116,6 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         if event.key() == Qt.Key_Right:
             self.prev_lon = self.lon
             self.lon += self.delta * 3
-
         self.update()
 
     def closeEvent(self, event):
