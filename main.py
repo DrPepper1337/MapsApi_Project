@@ -31,7 +31,6 @@ class MainWidget(QMainWindow, Ui_MainWindow):
     def initUI(self):
         self.change_type_btn.clicked.connect(self.change_map_type)
         self.search_btn.clicked.connect(self.search_to_geocode)
-        self.reset_btn.clicked.connect(self.reset_search)
 
     def update(self):
         self.getImage()
@@ -58,7 +57,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
                 "spn": ",".join([str(self.delta), str(self.delta)]),
                 "l": self.map_type,
             }
-            if self.point:
+            if self.point is not False:
                 params['pt'] = self.point
             api_server = "http://static-maps.yandex.ru/1.x/"
             response = requests.get(api_server, params=params)
@@ -68,6 +67,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             file.write(response.content)
         self.pixmap = QPixmap("map.png")
         self.map_label.setPixmap(self.pixmap)
+
 
     def search_to_geocode(self):
         geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={self.search_le.text()}&format=json"
@@ -85,11 +85,6 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             print("Ошибка выполнения запроса:")
             print(geocoder_request)
             print("Http статус:", response.status_code, "(", response.reason, ")")
-        self.search_le.clearFocus()
-        self.update()
-
-    def reset_search(self):
-        self.point = False
         self.update()
 
     def change_map_type(self):
