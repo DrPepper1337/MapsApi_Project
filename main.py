@@ -21,7 +21,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.prev_delta = self.delta
 
         self.point = False
-
+        self.address = ''
         self.map_type = 'map'
 
         self.setupUi(self)
@@ -32,10 +32,10 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.change_type_btn.clicked.connect(self.change_map_type)
         self.search_btn.clicked.connect(self.search_to_geocode)
         self.reset_btn.clicked.connect(self.reset_search)
-        self.index_checkBox.clicked.connect(self.index_output)
 
     def update(self):
         self.getImage()
+        self.display_address()
 
     def getImage(self):
         api_server = "http://static-maps.yandex.ru/1.x/"
@@ -45,7 +45,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             "spn": ",".join([str(self.delta), str(self.delta)]),
             "l": self.map_type,
         }
-        if self.point is not False:
+        if self.point:
             params['pt'] = self.point
 
         response = requests.get(api_server, params=params)
@@ -76,13 +76,19 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         else:
             print(0)
 
+    def display_address(self):
+        self.address_label.setText(self.address)
+
     def search_to_geocode(self):
         geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={self.search_le.text()}&format=json"
         response = requests.get(geocoder_request)
         if response:
             json_response = response.json()
             toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+
             toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+            self.address = toponym_address
+
             # Координаты центра топонима:
             toponym_coodrinates = toponym["Point"]["pos"]
             self.lon, self.lat = [float(i) for i in toponym_coodrinates.split()]
