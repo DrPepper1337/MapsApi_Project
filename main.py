@@ -22,6 +22,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
 
         self.point = False
         self.address = ''
+        self.index = ''
         self.map_type = 'map'
 
         self.setupUi(self)
@@ -32,6 +33,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.change_type_btn.clicked.connect(self.change_map_type)
         self.search_btn.clicked.connect(self.search_to_geocode)
         self.reset_btn.clicked.connect(self.reset_search)
+        self.index_chbx.clicked.connect(self.update)
 
     def update(self):
         self.getImage()
@@ -70,40 +72,50 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.pixmap = QPixmap("map.png")
         self.map_label.setPixmap(self.pixmap)
 
-    def index_output(self):
-        if self.index_checkBox.checkState():
-            print(1)
-        else:
-            print(0)
-
     def display_address(self):
-        self.address_label.setText(self.address)
+        if self.index_chbx.checkState():
+            self.address_label.setText(self.address + f', {self.index}')
+        else:
+            self.address_label.setText(self.address)
 
     def search_to_geocode(self):
-        geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={self.search_le.text()}&format=json"
-        response = requests.get(geocoder_request)
-        if response:
-            json_response = response.json()
-            toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+        try:
+            geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={self.search_le.text()}&format=json"
+            response = requests.get(geocoder_request)
+            if response:
+                json_response = response.json()
+                toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                # Адрес:
+                toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+                self.address = toponym_address
 
-            toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
-            self.address = toponym_address
+                # Почтовый индекс
+                try:
+                    toponym_index = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["postal_code"]
+                    self.index = toponym_index
+                except Exception:
+                    self.index = ''
 
-            # Координаты центра топонима:
-            toponym_coodrinates = toponym["Point"]["pos"]
-            self.lon, self.lat = [float(i) for i in toponym_coodrinates.split()]
-            self.point = f'{self.lon},{self.lat},round'
-        else:
-            # Произошла ошибка выполнения запроса. Обрабатываем http-статус.
-            print("Ошибка выполнения запроса:")
-            print(geocoder_request)
-            print("Http статус:", response.status_code, "(", response.reason, ")")
+                # Координаты центра топонима:
+                toponym_coodrinates = toponym["Point"]["pos"]
+                self.lon, self.lat = [float(i) for i in toponym_coodrinates.split()]
+
+                # Установка маркера:
+                self.point = f'{self.lon},{self.lat},round'
+            else:
+                # Произошла ошибка выполнения запроса. Обрабатываем http-статус.
+                print("Ошибка выполнения запроса:")
+                print(geocoder_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+        except Exception:
+            pass
         self.search_le.clearFocus()
         self.update()
 
     def reset_search(self):
         self.point = False
         self.address = ''
+        self.index = ''
         self.update()
 
     def change_map_type(self):
