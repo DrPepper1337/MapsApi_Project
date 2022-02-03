@@ -39,6 +39,10 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.getImage()
         self.display_address()
 
+    def foo(self):
+        print(0)
+        # Я и 10 одновременно сделал
+
     def getImage(self):
         api_server = "http://static-maps.yandex.ru/1.x/"
 
