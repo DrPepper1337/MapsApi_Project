@@ -103,6 +103,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
 
     def reset_search(self):
         self.point = False
+        self.address = ''
         self.update()
 
     def change_map_type(self):
